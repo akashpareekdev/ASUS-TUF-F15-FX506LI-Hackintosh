@@ -1,0 +1,13 @@
+# OpenCore debug logs written to the EFI partition
+opencore-*.txt
+*.log
+
+# macOS / Windows noise
+.DS_Store
+Thumbs.db
+._*
+
+# Never commit your own Mac identity or backups
+*.bak
+backups/
+platforminfo*
