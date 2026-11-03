@@ -42,5 +42,6 @@ This EFI is only possible because of the work of the people and projects below. 
 - [Intel ACPICA (`iasl`)](https://www.intel.com/content/www/us/en/developer/topic-technology/open/acpica/download.html) — decompiling and compiling ACPI tables
 - [GenSMBIOS](https://github.com/corpnewt/GenSMBIOS) by **CorpNewt** — recommended for generating your SMBIOS
 
-## Tested but not used
-- [NullMoth NVIDIA driver](https://github.com/nullmoth/nvidia-macos-driver) — we tested v2.6.6 on this laptop. It loaded but did not produce a display output here, so it is **not** part of this EFI. Thanks to its authors for the effort and for documenting laptop limitations honestly.
+## Optional / experimental (not included in this repo)
+- [NullMoth NVIDIA driver](https://github.com/nullmoth/nvidia-macos-driver) — by **NullMoth Systems**. We tested v2.6.6 on this laptop: the GTX 1650 Ti becomes an active GPU with Metal, with no external display output. See [docs/NVIDIA.md](docs/NVIDIA.md). Thanks to its authors for the work and for documenting laptop limitations honestly.
+- **AMFIPass** — needed by the NVIDIA config; distributed in the [Dortania OpenCore Legacy Patcher payloads](https://github.com/dortania/OpenCore-Legacy-Patcher/tree/main/payloads/Kexts/Acidanthera).
