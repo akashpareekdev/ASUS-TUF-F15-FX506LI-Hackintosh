@@ -42,7 +42,7 @@ Everything below happened to us while building this EFI. Setting names are the o
 
 ## Touchpad (I²C) — needs the `_OSI` patch
 
-*Found by reading the DSDT; we handled it up front.*
+*Found by reading the DSDT; we handled it up front, and the touchpad works.*
 
 **Cause (from the DSDT):** the firmware only enables the I²C device when it sees Windows 2012 or newer (`OSYS ≥ 0x07DC`); macOS does not report that.
 
@@ -50,7 +50,7 @@ Everything below happened to us while building this EFI. Setting names are the o
 
 ## Battery (16-bit EC fields)
 
-*Found by reading the DSDT; we handled it up front.*
+*Found by reading the DSDT; we handled it up front, and the battery reads correctly.*
 
 **Cause (from the DSDT):** the embedded controller exposes 16-bit and larger fields (`MBCT`, `RCAP`, `MBVT`, …), which macOS cannot read byte-by-byte.
 
@@ -66,15 +66,15 @@ macOS expects an EC called `EC`; this laptop's real one is `EC0`. `SSDT-EC-USBX.
 
 ## Backlight
 
-The firmware tables have no backlight device. `SSDT-PNLF.aml` adds one (`UID 0x13`); WhateverGreen gets `-igfxblt -igfxblr`; BrightnessKeys handles the hotkeys. (Brightness control still needs verification.)
+The firmware tables have no backlight device. `SSDT-PNLF.aml` adds one (`UID 0x13`); WhateverGreen gets `-igfxblt -igfxblr`; BrightnessKeys handles the hotkeys. (Brightness control works.)
 
 ## NVIDIA GTX 1650 Ti
 
-macOS has no driver for Turing GPUs, and the dGPU is not connected to the built-in panel. It is hidden with `-wegnoegpu`.
+Apple has no driver for Turing GPUs, and the dGPU is not connected to the built-in panel. By default it is hidden with `-wegnoegpu`.
 
-We also tried the experimental third-party **NullMoth NVIDIA driver** (v2.6.6): the four kexts loaded, but the card produced **no display output** (HDMI did not work) on this model, and the desktop stayed on the Intel GPU, so we removed it. The driver also requires weakening SIP/AMFI, which we do not recommend for a daily system.
+We also tried the experimental third-party **NullMoth NVIDIA driver** (v2.6.6) with `config-nvidia.plist`: the card showed up as an **active GPU with Metal**, but there was **no display output on the external ports** (HDMI / USB-C video). The built-in screen stays on the Intel UHD 630. The driver requires weakening SIP/AMFI.
 
-**Result:** HDMI and USB-C video-out do not work on this laptop in macOS; the built-in screen runs on the UHD 630.
+**Result:** the NVIDIA GPU can be made active with Metal (optional, experimental — see [NVIDIA.md](NVIDIA.md)), but external displays still do not work on this laptop.
 
 ## USB ports
 
