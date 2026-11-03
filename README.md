@@ -5,7 +5,7 @@
 ![Laptop](https://img.shields.io/badge/ASUS%20TUF%20F15-FX506LI-red)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-A working OpenCore EFI, ACPI patches and notes for the **ASUS TUF Gaming F15 FX506LI** (i5-10300H, UHD 630 + GTX 1650 Ti, MediaTek MT7921 Wi-Fi/Bluetooth). **Wi-Fi and Ethernet work, and Metal is enabled** (Wi-Fi even works in the installer). We could not find a build for this exact model, so we are sharing ours together with every problem we hit and how we solved it.
+A working OpenCore EFI, ACPI patches and notes for the **ASUS TUF Gaming F15 FX506LI** (i5-10300H, UHD 630 + GTX 1650 Ti, MediaTek MT7921 Wi-Fi/Bluetooth). **Wi-Fi, Ethernet, Bluetooth, touchpad, sound, brightness, battery and sleep/wake all work, and Metal is enabled** (Wi-Fi even works in the installer). We could not find a build for this exact model, so we are sharing ours together with every problem we hit and how we solved it.
 
 **Made by Akash Pareek & Ankit Pareek**
 
@@ -33,7 +33,7 @@ A working OpenCore EFI, ACPI patches and notes for the **ASUS TUF Gaming F15 FX5
 | Laptop | ASUS TUF Gaming F15 **FX506LI** | BIOS `FX506LI.310` (2021-11-26) |
 | CPU | Intel Core i5-10300H (Comet Lake-H, 4C/8T) | |
 | iGPU | Intel UHD Graphics 630 (`8086:9BC4`) | drives the built-in 1920×1080 144 Hz panel |
-| dGPU | NVIDIA GeForce GTX 1650 Ti (`10DE:1F95`) | **not supported by macOS** — disabled (`-wegnoegpu`) |
+| dGPU | NVIDIA GeForce GTX 1650 Ti (`10DE:1F95`) | no Apple driver — hidden by default (`-wegnoegpu`); optional experimental driver, see [docs/NVIDIA.md](docs/NVIDIA.md) |
 | Wi-Fi / Bluetooth | MediaTek MT7921 (PCI `14C3:7961`, BT USB `13D3:3563`) | experimental community drivers, see below |
 | Ethernet | Realtek RTL8168 (`10EC:8168`) | RealtekRTL8111 kext |
 | Audio | Realtek HDA codec | AppleALC, layout `17` |
@@ -48,16 +48,20 @@ macOS **Sequoia 15.8.2** installed on an internal NVMe partition, dual-booting w
 | Feature | Status |
 |---|---|
 | Install + boot (OpenCore 1.0.8) | ✅ confirmed |
-| Intel UHD 630 graphics with **Metal** enabled, built-in display 1920×1080 | ✅ confirmed |
+| Intel UHD 630 graphics — **GPU acceleration with Metal** (shown in About This Mac), built-in display 1920×1080 | ✅ **works** |
 | Wi-Fi (MediaTek MT7921, native menu) | ✅ **works** — also in the installer, where we used it to download macOS |
 | Ethernet (Realtek RTL8168) | ✅ **works** |
-| Battery indicator | ✅ confirmed in the menu bar |
-| Audio / microphone | ⚠️ not verified — edit this table after you test |
-| Touchpad / keyboard | ⚠️ not verified — edit this table after you test |
-| Bluetooth (MT7921) | ⚠️ driver included, not verified |
-| Sleep / wake | ⚠️ not verified |
-| Webcam, card reader, USB ports | ⚠️ not verified; USB ports are **not mapped** yet |
-| NVIDIA GTX 1650 Ti | ❌ no macOS driver; HDMI / USB-C video-out are wired to this GPU, so **external displays do not work** |
+| Battery (percentage and charging state) | ✅ **works** |
+| Audio (speakers / headphones) | ✅ **works** |
+| Touchpad (I²C) and keyboard | ✅ **works** |
+| Volume / media keys | ✅ **works** |
+| Brightness control | ✅ **works** |
+| Bluetooth (MT7921) | ✅ **works** |
+| Sleep / wake | ✅ **works** |
+| USB ports | ✅ **work** with the included default map — they are **not individually mapped** yet (see Known issues) |
+| Microphone | ⚠️ not verified |
+| Webcam, card reader | ⚠️ not verified |
+| NVIDIA GTX 1650 Ti (second GPU) | ✅⚠️ **experimental, optional** — hidden by default. With the third-party NullMoth driver it is **active with Metal**, but there is **no external display output** (HDMI / USB-C video). See [docs/NVIDIA.md](docs/NVIDIA.md) |
 
 > We will keep this table honest. If you test more features, please open an issue or PR.
 
@@ -65,6 +69,7 @@ macOS **Sequoia 15.8.2** installed on an internal NVMe partition, dual-booting w
 
 ```
 EFI/              OpenCore 1.0.8 EFI (BOOT + OC): config.plist, ACPI .aml, drivers, kexts
+EFI/OC/config-nvidia.plist   optional, experimental NVIDIA config (see docs/NVIDIA.md)
 ACPI-src/         Source (.dsl) of our SSDTs, so you can read and rebuild them
 docs/             Install guide, BIOS settings, SMBIOS, ACPI notes, troubleshooting
 scripts/          Helper for macOS (turn off automatic software updates)
@@ -129,11 +134,11 @@ Short version — the full write-up with settings is in [docs/TROUBLESHOOTING.md
 | OpenCore stops with *"No schema for HideSelf"* | that key no longer exists in OpenCore 1.0.x — check every key against `Docs/Sample.plist` |
 | Installer media dropping out (I/O timeouts) | use a different, reliable USB stick/cable |
 | Dual-boot: Windows keeps reordering the boot list, or shows two Windows entries | we boot Windows by default and use the **Esc boot menu** for OpenCore; duplicate firmware entries removed with `bcdedit /delete` |
-| NVIDIA card unusable | disabled with `-wegnoegpu`. We also tried an experimental third-party NVIDIA driver — it loaded but produced no display output here |
+| NVIDIA card has no Apple driver | hidden by default with `-wegnoegpu`. Optional experiment: `config-nvidia.plist` + the NullMoth driver makes it active with Metal, but gives no external display ([docs/NVIDIA.md](docs/NVIDIA.md)) |
 | No Wi-Fi: MT7921 has no Apple driver | community driver **AirportMtkWlan** (Sequoia build), kernel range `24.2.0–24.99.99`, `DisableIoMapper = True` |
 | Bluetooth (`13D3:3563`) not recognised by stock macOS | **SimpleMtkBtFw** + **SimpleMtkBtPatcher** (has a personality for this exact ID) |
 
-**Issues we found in the firmware tables and handled up front** (read from the DSDT; behaviour not separately verified):
+**Issues we found in the firmware tables and handled up front** (read from the DSDT — touchpad, battery and brightness all work with these fixes):
 
 | Issue | What the config does |
 |---|---|
